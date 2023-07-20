@@ -19,6 +19,7 @@ RUN apk update && apk upgrade && apk add --no-cache \
     php${PHP_VERSION}-xml \
     php${PHP_VERSION}-zip \
     wget \
+    curl \
     unzip && \
     sed -i "s|listen = 127.0.0.1:9000|listen = 9000|g" \
       /etc/php8/php-fpm.d/www.conf && \
@@ -30,6 +31,7 @@ RUN apk update && apk upgrade && apk add --no-cache \
 
 WORKDIR /var/www
 
+# Download WordPress & run it
 RUN wget https://wordpress.org/latest.zip && \
     unzip latest.zip && \
     cp -rf wordpress/* . && \
@@ -38,6 +40,11 @@ RUN wget https://wordpress.org/latest.zip && \
 COPY ./requirements/wordpress/conf/wp-config-create.sh .
 
 RUN sh wp-config-create.sh && rm wp-config-create.sh && \
-    chmod -R 0777 wp-content/ 
+    chmod -R 0777 wp-content/
+
+COPY ./requirements/wordpress/tools/make_dir.sh .
+
+RUN chmod +x make_dir.sh && \
+    sh make_dir.sh && rm make_dir.sh
 
 CMD ["/usr/sbin/php-fpm8", "-F"]

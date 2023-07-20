@@ -3,22 +3,25 @@ name = inception
 # Create and start containers --detached
 all:
 	@printf "Create and start ${name}...\n"
+	@bash srcs/requirements/wordpress/tools/make_dir.sh
 	@docker-compose -f ./srcs/docker-compose.yml --env-file srcs/.env up -d
 	
 # Build or rebuild services
 build:
 	@printf "Build ${name}...\n"
+	@bash srcs/requirements/wordpress/tools/make_dir.sh
 	@docker-compose -f ./srcs/docker-compose.yml --env-file srcs/.env up -d --build
+  @bash srcs/requirements/wordpress/tools/make_dir.sh
 
 # Stop and remove containers, networks
 down:
 	@printf "Stop ${name}...\n"
 	@docker-compose -f ./srcs/docker-compose.yml --env-file srcs/.env down
 
-# Re-build
 re:
 	@printf "Rebuild ${name}...\n"
-	@docker-compose -f ./srcs/docker-compose.yml --env-file srcs/.env up -d --build
+	
+@docker-compose -f ./srcs/docker-compose.yml --env-file srcs/.env up -d --build
 
 # Remove unused data --all
 clean: 	down
