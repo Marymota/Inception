@@ -18,7 +18,6 @@ RUN apk update && apk upgrade && apk add --no-cache \
     php${PHP_VERSION}-openssl \
     php${PHP_VERSION}-xml \
     php${PHP_VERSION}-zip \
-    php${PHP_VERSION}-redis \
     wget \
     unzip && \
     sed -i "s|listen = 127.0.0.1:9000|listen = 9000|g" \
@@ -29,7 +28,11 @@ RUN apk update && apk upgrade && apk add --no-cache \
       /etc/php8/php-fpm.d/www.conf && \
     rm -f /var/cache/apk/*
 
-WORKDIR /var/www
+RUN wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
+	--output-document=/usr/local/bin/wp \
+  && chmod +x /usr/local/bin/wp
+
+WORKDIR /var/www/html
 
 RUN wget https://wordpress.org/latest.zip && \
     unzip latest.zip && \
@@ -41,5 +44,4 @@ COPY ./wordpress/conf/wp-config-create.sh .
 RUN sh wp-config-create.sh && rm wp-config-create.sh && \
     chmod -R 0777 wp-content/
 
-#ENTRYPOINT ["wp-config-create.sh"]
 CMD ["/usr/sbin/php-fpm8", "-F"]

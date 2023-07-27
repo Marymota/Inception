@@ -20,7 +20,7 @@ services:
       # Mount certificates and keys for the domain to the appropriate directory on the container
       - ./requirements/nginx/tools:/etc/nginx/ssl/
       # Mount the WordPress application code tothe directory set as root in the Nginx server block
-      - wp-volume:/var/www/
+      - wp-volume:/var/www/html
     restart: unless-stopped
 
   mariadb:
@@ -57,7 +57,7 @@ services:
     networks:
       - inception
     volumes:
-      - wp-volume:/var/www/
+      - wp-volume:/var/www/html
 
 volumes:
   wp-volume:
