@@ -18,6 +18,7 @@ RUN apk update && apk upgrade && apk add --no-cache \
     php${PHP_VERSION}-openssl \
     php${PHP_VERSION}-xml \
     php${PHP_VERSION}-zip \
+    php-phar \
     wget \
     unzip && \
     sed -i "s|listen = 127.0.0.1:9000|listen = 9000|g" \
@@ -28,9 +29,8 @@ RUN apk update && apk upgrade && apk add --no-cache \
       /etc/php8/php-fpm.d/www.conf && \
     rm -f /var/cache/apk/*
 
-RUN wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
-	--output-document=/usr/local/bin/wp \
-  && chmod +x /usr/local/bin/wp
+#RUN addgroup --system wordpress_server \
+ # && adduser --system wordpress_server
 
 WORKDIR /var/www/html
 
@@ -39,9 +39,20 @@ RUN wget https://wordpress.org/latest.zip && \
     cp -rf wordpress/* . && \
     rm -rf wordpress latest.zip
 
+RUN rm -rf * && wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && \
+    chmod +x wp-cli.phar && \
+    mv wp-cli.phar /usr/local/bin/wp && \
+    wp core download --locale=en_GB --allow-root    
+
 COPY ./wordpress/conf/wp-config-create.sh .
 
-RUN sh wp-config-create.sh && rm wp-config-create.sh && \
-    chmod -R 0777 wp-content/
+RUN  sh wp-config-create.sh && rm wp-config-create.sh && \
+     chmod -R 0775 wp-content/
 
-CMD ["/usr/sbin/php-fpm8", "-F"]
+#RUN wp core is-installed --allow-root 
+#    wp core install --url=$DB_URLRUN wp core install --url=$DB_URL --title="Inception" --admin_user=$DB_USER --admin_password=$DB_PASS \
+#    --admin_email=mmota@42.fr --skip-email --allow-root
+#RUN user create $DB_USER $DB_EMAIL --tole=author --user_pass=$DB_PASS --allow-root
+#RUN wp theme install astra --activate --allow-root
+
+ENTRYPOINT ["/usr/sbin/php-fpm8", "-F"]

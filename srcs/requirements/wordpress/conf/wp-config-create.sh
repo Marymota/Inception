@@ -1,15 +1,14 @@
 #!bin/sh
 
 #Add the followinf PHP code inside wp-config
-if [ ! -f "/var/www/wp-config.php" ]; then
-cat << EOF > /var/www/wp-config.php
+if [ ! -f "/var/www/html/wp-config.php" ]; then
+	cat << EOF > /var/www/html/wp-config.php
 
 <?php
 
 # DATABASE CONFIG
 # Database for WordPress name
 define( 'DB_NAME', '${DB_NAME}' );
-
 define( 'DB_USER', '${DB_USER}' );
 
 # MySQL database password
@@ -44,71 +43,6 @@ define('FS_METHOD','direct');
 # WP Database table prefix
 \$table_prefix = 'wp_';
 
-# Checks if wp-config.php file has already been created by a previous run of this script
-if [ -e wp-config.php ]; then
-	  echo "Wordpress config already created"
-else
-    # Create the wordpress config file
-    wp config create --allow-root \
-        --dbname=$db_name \
-        --dbuser=$db_user \
-        --dbpass=$db_pwd \
-        --dbhost=$db_host
-   chmod 600 wp-config.php
-fi
-
-# Check if wordpress is already installed
-if wp core is-installed --allow-root; then
-	  echo "Wordpress core already installed"
-else
-    # Installs wordpress
-    wp core install --allow-root \
-        --url=https://mmota.42.fr \
-        --title="Inception" \
-        --admin_user=$DB_USER \
-        --admin_email=mmota@42.fr \
-        --admin_password=$DB_PASS
-
-    wp user create --allow-root \
-        $DB_USER \
-        mmota@42.fr \
-        --role=author \
-        --user_pass=$DB_PASS
-
-    # Turns off debugging which is needed when using CLI from container
-    wp config set WORDPRESS_DEBUG false --allow-root
-fi
-
-# Check if author user has already been created by a previous run of this script
-if !(wp user list --field=user_login --allow-root | grep $DB_USER); then
-	# Create a new author user
-    wp user create --allow-root \
-        $DB_USER \
-        mmota@42.fr \
-        --role=author \
-        --user_pass=$DB_PASS
-fi
-
-wp user set-role $DB_USER administrator --allow-root
-
-wp plugin update --all --allow-root
-
-# Set comment settings
-
-wp option set comment_moderation 0 --allow-root
-wp option set moderation_notify 0 --allow-root
-wp option set comment_previously_approved 0 --allow-root
-wp option set close_comments_for_old_posts 0 --allow-root   
-wp option set close_comments_days_old 0 --allow-root
-
-# Sets the correct port to listen to nginx
-sed -ie 's/listen = \/run\/php\/php7.4-fpm.sock/listen = 0.0.0.0:9000/g' \
-/etc/php/7.4/fpm/pool.d/www.conf
-
-wp theme activate twentytwentytwo --allow-root
-
-chown -R wpg:wpg /var/www/html*
-
 # Absolute path to the WP directory 
 if ( ! defined( 'ABSPATH' ) ) {
 	define( 'ABSPATH', __DIR__ . '/' );
@@ -119,3 +53,47 @@ require_once ABSPATH . 'wp-settings.php';
 EOF
 fi
 
+#if [ -e /etc/php/8.0/fpm/pool.d/www.conf ]; then
+#	echo "FastCGI Process Manager config already created"
+#else
+
+# Ensure the necessary directories exist
+#	mkdir -p /etc/php/8.0/fpm/pool.d/
+#	# Create www.conf
+#	cat > /etc/php/8.0/fpm/pool.d/www.conf <<EOL
+#	[www]
+#	user = www-data
+#	group = www-data
+#	listen = /run/php/php8.0-fpm.sock
+#	listen.owner = www-data
+#	listen.group = www-data
+#	pm = dynamic
+#	pm.max_children = 5
+#	pm.start_servers = 2
+#	pm.min_spare_servers = 1
+#	pm.max_spare_servers = 3
+#	EOL
+
+	# Set appropriate permissions for www.conf
+#	chmod 644 /etc/php/8.0/fpm/pool.d/www.conf
+#fi
+
+#wp core install --url=$DB_URL --title=$DB_TITLE --admin_user=$DB_USER --admin_password=$DB_PASS --admin_email=$DB_EMAIL
+
+#if ! wp core is-installed --allow-root; then
+#	wp config create --dbname=$DB_NAME --dbuser=$DB_USER --dbpass=$DB_PASS
+#	# create admin
+#	wp core install --allow-root \
+#	--url=$DB_URL \
+#	--title="Inception" \
+#	--admin_user=mmota \
+#	--admin_password=$DB_PASS \
+#	--admin_email=mmota@42.fr \
+#	#create user
+#	wp user create --allow-root \
+#		$DB_USER \
+#		$DB_EMAIL \
+#		--role=author \
+#		--user_pass=$WP_PASS
+#	wp core install --url=$DB_URL --title=$DB_TITLE --admin_user=$DB_USER --admin_password=$DB_PASS --admin_email=$DB_EMAIL
+#fi

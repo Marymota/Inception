@@ -23,8 +23,11 @@ DROP DATABASE test;
 DELETE FROM mysql.db WHERE Db='test';
 DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');
 ALTER USER 'root'@'localhost' IDENTIFIED BY '${DB_ROOT}';
+# Create a MySQL database to WordPress
 CREATE DATABASE ${DB_NAME} CHARACTER SET utf8 COLLATE utf8_general_ci;
+# Create a MySQL user and set a password
 CREATE USER '${DB_USER}'@'%' IDENTIFIED by '${DB_PASS}';
+# Grant all privileges on the WordPress database to the user
 GRANT ALL PRIVILEGES ON wordpress.* TO '${DB_USER}'@'%';
 FLUSH PRIVILEGES;
 EOF
