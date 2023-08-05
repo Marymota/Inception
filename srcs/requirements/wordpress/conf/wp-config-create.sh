@@ -1,99 +1,74 @@
-#!bin/sh
+#!/bin/sh
 
-#Add the followinf PHP code inside wp-config
-if [ ! -f "/var/www/html/wp-config.php" ]; then
-	cat << EOF > /var/www/html/wp-config.php
+set -x
 
-<?php
+# Checks if the config file has already been created by a previous run of this script
+if [ -e /etc/php/8.0/fpm/pool.d/www.conf ]; then
+    echo "FastCGI Process Manager config already created"
+else
+    # Create the directory for www.conf if it doesn't exist
+     mkdir -p /etc/php/8.0/fpm/pool.d
 
-# DATABASE CONFIG
-# Database for WordPress name
-define( 'DB_NAME', '${DB_NAME}' );
-define( 'DB_USER', '${DB_USER}' );
-
-# MySQL database password
-define( 'DB_PASSWORD', '${DB_PASS}' );
-
-# MySQL hostname
-define( 'DB_HOST', 'mariadb' );
-
-# Database Charset in creating database tables
-define( 'DB_CHARSET', 'utf8' );
-
-# Database Collate type (sorting rules, case and sensitivity properties)
-define( 'DB_COLLATE', '' );
-
-# DEBUG MODE
-# Enable debug mode 
-define( 'WP_DEBUG', true );
-
-# Force WP to store messages into debug.log 
-define( 'WP_DEBUG_LOG', true );
-
-# Hide debug logs from the screen
-define( 'WP_DEBUG_DISPLAY', false );
-
-# Don't print errors on screen
-@ini_set( 'display_errors', 0 );
-
-# PREDEFINED WORDPRESS CONSTANTS*/
-# Writes files directly to the filesystem
-define('FS_METHOD','direct');
-
-# WP Database table prefix
-\$table_prefix = 'wp_';
-
-# Absolute path to the WP directory 
-if ( ! defined( 'ABSPATH' ) ) {
-	define( 'ABSPATH', __DIR__ . '/' );
-}
-
-# Sets up WP vars and include files
-require_once ABSPATH . 'wp-settings.php';
-EOF
+    # Substitutes env variables and creates config file
+     cat /www.conf.tmpl | /usr/bin/envsubst > /etc/php/8.0/fpm/pool.d/www.conf
+     chmod 755 /etc/php/8.0/fpm/pool.d/www.conf
 fi
 
-#if [ -e /etc/php/8.0/fpm/pool.d/www.conf ]; then
-#	echo "FastCGI Process Manager config already created"
-#else
+# Checks if wp-config.php file has already been created by a previous run of this script
+if [ -e wp-config.php ]; then
+	  echo "Wordpress config already created"
+else
+   wp db export db-backup.sql --socket="/Users/$DB_USER/Library/Application Support/Local/run/Zz3-D-Hl-/mysqld.sock"
+    # Create the wordpress config file
+   wp config create --allow-root \
+       --dbname=$DB_NAME \
+       --dbuser=$DB_USER \
+       --dbpass=$DB_PASS \
+       --dbhost=$DB_HOST
 
-# Ensure the necessary directories exist
-#	mkdir -p /etc/php/8.0/fpm/pool.d/
-#	# Create www.conf
-#	cat > /etc/php/8.0/fpm/pool.d/www.conf <<EOL
-#	[www]
-#	user = www-data
-#	group = www-data
-#	listen = /run/php/php8.0-fpm.sock
-#	listen.owner = www-data
-#	listen.group = www-data
-#	pm = dynamic
-#	pm.max_children = 5
-#	pm.start_servers = 2
-#	pm.min_spare_servers = 1
-#	pm.max_spare_servers = 3
-#	EOL
+	chmod 777 wp-config.php
+fi
 
-	# Set appropriate permissions for www.conf
-#	chmod 644 /etc/php/8.0/fpm/pool.d/www.conf
-#fi
+# Check if wordpress is already installed
+if wp core is-installed --allow-root; then
+	  echo "Wordpress core already installed"
+else
 
-#wp core install --url=$DB_URL --title=$DB_TITLE --admin_user=$DB_USER --admin_password=$DB_PASS --admin_email=$DB_EMAIL
+    # Installs wordpress
+   wp core install --allow-root \
+       --url='https://mmota.42.fr' \
+       --title='Inception' \
+       --admin_user=$DB_NAME \
+       --admin_email='mmota@42.fr' \
+       --admin_password=$DB_PASS
 
-#if ! wp core is-installed --allow-root; then
-#	wp config create --dbname=$DB_NAME --dbuser=$DB_USER --dbpass=$DB_PASS
-#	# create admin
-#	wp core install --allow-root \
-#	--url=$DB_URL \
-#	--title="Inception" \
-#	--admin_user=mmota \
-#	--admin_password=$DB_PASS \
-#	--admin_email=mmota@42.fr \
-#	#create user
-#	wp user create --allow-root \
-#		$DB_USER \
-#		$DB_EMAIL \
-#		--role=author \
-#		--user_pass=$WP_PASS
-#	wp core install --url=$DB_URL --title=$DB_TITLE --admin_user=$DB_USER --admin_password=$DB_PASS --admin_email=$DB_EMAIL
-#fi
+    # create a new author user
+   wp user create --allow-root \
+       $DB_NAME \
+       'mmota@42.fr' \
+       --role=author \
+       --user_pass=$DB_PASS
+
+    # Turns off debugging which is needed when using CLI from container
+    wp config set WORDPRESS_DEBUG false --allow-root
+fi
+
+# Check if author user has already been created by a previous run of this script
+if !(wp user list --field=user_login --allow-root | grep $DB_USER); then
+
+	# create a new author user
+    wp user create --allow-root \
+        $DB_USER \
+        'mmota@42.fr' \
+        --role=author \
+        --user_pass=$DB_PASS
+
+fi
+
+wp plugin update --all --allow-root
+
+# Sets the correct port to listen to nginx
+sed -ie 's/listen = \/run\/php\/php8.0-fpm.sock/listen = 0.0.0.0:9000/g' \
+/etc/php/8.0/fpm/pool.d/www.conf
+
+exec "$@"

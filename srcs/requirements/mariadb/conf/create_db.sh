@@ -1,37 +1,36 @@
-#!bin/sh
+#!/bin/sh
 
 if [ ! -d "/var/lib/mysql/mysql" ]; then
 
-        chown -R mysql:mysql /var/lib/mysql
-
-        # init database
-        mysql_install_db --basedir=/usr --datadir=/var/lib/mysql --user=mysql --rpm
-
-        tfile=`mktemp`
-        if [ ! -f "$tfile" ]; then
-                return 1
-        fi
+    #Solved Fatal error: Can't open and lock privilege tables
+    chown -R mysql:mysql /var/lib/mysql
+    chgrp -R mysql /var/lib/mysql
+    mysql_install_db --user=mysql --basedir=/usr --datadir=/var/lib/mysql
 fi
 
 if [ ! -d "/var/lib/mysql/wordpress" ]; then
-
-        cat << EOF > /tmp/create_db.sql
+    cat <<EOF > /tmp/create_db.sql
 USE mysql;
 FLUSH PRIVILEGES;
-DELETE FROM     mysql.user WHERE User='';
-DROP DATABASE test;
+DELETE FROM mysql.user WHERE User='';
+DROP DATABASE IF EXISTS test;
 DELETE FROM mysql.db WHERE Db='test';
 DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');
 ALTER USER 'root'@'localhost' IDENTIFIED BY '${DB_ROOT}';
-# Create a MySQL database to WordPress
+# Create a MySQL database for WordPress
 CREATE DATABASE ${DB_NAME} CHARACTER SET utf8 COLLATE utf8_general_ci;
-# Create a MySQL user and set a password
-CREATE USER '${DB_USER}'@'%' IDENTIFIED by '${DB_PASS}';
-# Grant all privileges on the WordPress database to the user
-GRANT ALL PRIVILEGES ON wordpress.* TO '${DB_USER}'@'%';
+# Create MySQL users and set passwords
+CREATE USER '${DB_USER}'@'%' IDENTIFIED BY '${DB_PASS}';
+CREATE USER '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}';
+# Grant all privileges on the WordPress database to the users
+GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USER}'@'%';
+GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USER}'@'localhost';
 FLUSH PRIVILEGES;
+SET GLOBAL skip_name_resolve=OFF;
 EOF
-        # run init.sql
-        /usr/bin/mysqld --user=mysql --bootstrap < /tmp/create_db.sql
-        rm -f /tmp/create_db.sql
+
+    # Run the initialization SQL script
+    /usr/bin/mysqld --user=mysql --bootstrap < /tmp/create_db.sql
+    rm -f /tmp/create_db.sql
 fi
+
