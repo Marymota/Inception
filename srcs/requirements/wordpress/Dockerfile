@@ -64,48 +64,8 @@ RUN chmod +x /usr/local/bin/wp-config-create.sh
 
 RUN rm -f /etc/php/8.0/fpm/pool.d/www.conf
 
+EXPOSE 9000
+
 CMD ["/usr/sbin/php-fpm8", "-F"]
 
 ENTRYPOINT ["wp-config-create.sh"]
-
-
-# Copy the custom php-fpm configuration
-#COPY ./wordpress/tools/php-fpm.conf /etc/php/8.0/fpm/php-fpm.conf
-
-# - copy the config file to container root as a template file
-#COPY ./wordpress/conf/php-fpm.conf /php-fpm.conf.tmpl
-
-
-#RUN chmod -R 0775 /usr/local/bin/wp-config-create.sh
-
-# - add the "wordpress_server" group and user
-#RUN addgroup --system wordpress_server \
-#  && adduser --system wordpress_server
-
-
-#RUN wp core install --allow-root \
-#  --url="https://mmota.42.fr" \
-#  --title="Inception" \
-#  --admin_user=$DB_USER \
-#  --admin_password=$DB_PASS \
-#  --admin_email=$DB_EMAIL
-
-#RUN wp core is-installed --allow-root 
-
-#RUN wget https://wordpress.org/latest.zip && \
-#    unzip latest.zip && \
-#    cp -rf wordpress/* . && \
-#    rm -rf wordpress latest.zip
-
-
-#RUN addgroup --system wordpress_server \
- # && adduser --system wordpress_server
-
-#RUN chmod -R 0775 wp-content/
-#COPY ./wordpress/conf/wp-config-create.sh .
-#RUN sh wp-config-create.sh
-
-#    wp core install --url=$DB_URLRUN wp core install --url=$DB_URL --title="Inception" --admin_user=$DB_USER --admin_password=$DB_PASS \
-#    --admin_email=mmota@42.fr --skip-email --allow-root
-#RUN user create $DB_USER $DB_EMAIL --tole=author --user_pass=$DB_PASS --allow-root
-#RUN wp theme install astra --activate --allow-root

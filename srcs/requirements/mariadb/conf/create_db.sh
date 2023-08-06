@@ -2,6 +2,9 @@
 
 if [ ! -d "/var/lib/mysql/mysql" ]; then
 
+#    touch /run/mysqld/mysqld.sock
+#    chmod 660 /run/mysqld/mysqld.sock
+#    chown root:root /run/mysqld/mysqld.sock
     #Solved Fatal error: Can't open and lock privilege tables
     chown -R mysql:mysql /var/lib/mysql
     chgrp -R mysql /var/lib/mysql
@@ -26,7 +29,6 @@ CREATE USER '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}';
 GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USER}'@'%';
 GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USER}'@'localhost';
 FLUSH PRIVILEGES;
-SET GLOBAL skip_name_resolve=OFF;
 EOF
 
     # Run the initialization SQL script

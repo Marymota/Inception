@@ -2,6 +2,11 @@
 
 set -x
 
+#until mysql --host=mariadb --user=root --password=${DB_PASS} -e '\c'; do
+#  echo >&2 "mariadb is unavailable - sleeping"
+#  sleep 1
+#done
+
 # Checks if the config file has already been created by a previous run of this script
 if [ -e /etc/php/8.0/fpm/pool.d/www.conf ]; then
     echo "FastCGI Process Manager config already created"
@@ -18,13 +23,20 @@ fi
 if [ -e wp-config.php ]; then
 	  echo "Wordpress config already created"
 else
-   wp db export db-backup.sql --socket="/Users/$DB_USER/Library/Application Support/Local/run/Zz3-D-Hl-/mysqld.sock"
+# Apline don't have mariadb-server package so this configurations need to be made manually
+# https://bestafiko.medium.com/cant-connect-to-local-mysql-server-through-socket-var-run-mysqld-mysqld-sock-2-on-docker-c854638cd2db
+#    touch /var/run/mysqld/mysqld.sock
+#    touch /var/run/mysqld/mysqld.pid
+#    chown -R mysql:mysql /var/run/mysqld/mysqld.sock
+#    chown -R mysql:mysql /var/run/mysqld/mysqld.pid
+#    chmod -R 644 /var/run/mysqld/mysqld.sock
+
     # Create the wordpress config file
    wp config create --allow-root \
-       --dbname=$DB_NAME \
-       --dbuser=$DB_USER \
-       --dbpass=$DB_PASS \
-       --dbhost=$DB_HOST
+       --dbname=wordpress \
+       --dbuser=mmota \
+       --dbpass=10taCruel \
+       --dbhost=mariadb
 
 	chmod 777 wp-config.php
 fi
@@ -36,32 +48,32 @@ else
 
     # Installs wordpress
    wp core install --allow-root \
-       --url='https://mmota.42.fr' \
-       --title='Inception' \
-       --admin_user=$DB_NAME \
-       --admin_email='mmota@42.fr' \
-       --admin_password=$DB_PASS
+       --url=https://mmota.42.fr \
+       --title=Inception \
+       --admin_user=mmota \
+       --admin_email=mmota@42.fr \
+       --admin_password=10taCruel
 
     # create a new author user
    wp user create --allow-root \
-       $DB_NAME \
-       'mmota@42.fr' \
+       mmota \
+       mmota@42.fr \
        --role=author \
-       --user_pass=$DB_PASS
+       --user_pass=10taCruel
 
     # Turns off debugging which is needed when using CLI from container
     wp config set WORDPRESS_DEBUG false --allow-root
 fi
 
 # Check if author user has already been created by a previous run of this script
-if !(wp user list --field=user_login --allow-root | grep $DB_USER); then
+if !(wp user list --field=user_login --allow-root | grep mmota); then
 
 	# create a new author user
     wp user create --allow-root \
-        $DB_USER \
-        'mmota@42.fr' \
+        mmota \
+        mmota@42.fr \
         --role=author \
-        --user_pass=$DB_PASS
+        --user_pass=10taCruel
 
 fi
 
