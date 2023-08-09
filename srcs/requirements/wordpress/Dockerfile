@@ -1,12 +1,9 @@
 FROM alpine:3.16
 
-ARG PHP_VERSION=8 \
-    DB_NAME \
-    DB_USER \
-    DB_PASS \
-    DB_HOST
+ARG PHP_VERSION=8
 
 RUN apk update && apk upgrade && apk add --no-cache \
+    # Instal PHP-FPM & other packages
     php${PHP_VERSION} \
     php${PHP_VERSION}-fpm \
     php${PHP_VERSION}-mysqli \
@@ -26,34 +23,20 @@ RUN apk update && apk upgrade && apk add --no-cache \
     gettext \
     mysql-client && \
     rm -rf /var/lib/apt/lists/* && \
-    mkdir /run/php && \ 
-    sed -i "s|listen = 127.0.0.1:9000|listen = 9000|g" \
-     /etc/php8/php-fpm.d/www.conf && \
-    sed -i "s|;listen.owner = nobody|listen.owner = nobody|g" \
-     /etc/php8/php-fpm.d/www.conf && \
-    sed -i "s|;listen.group = nobody|listen.group = nobody|g" \
-     /etc/php8/php-fpm.d/www.conf && \
-    rm -f /var/cache/apk/*
+    rm -f /var/cache/apk/* 
+
+RUN sed -i "s|listen = 127.0.0.1:9000|listen = 9000|g" /etc/php8/php-fpm.d/www.conf && \
+    sed -i "s|;listen.owner = nobody|listen.owner = nobody|g" /etc/php8/php-fpm.d/www.conf && \
+    sed -i "s|;listen.group = nobody|listen.group = nobody|g" /etc/php8/php-fpm.d/www.conf 
 
 RUN wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && \
     chmod +x wp-cli.phar && \
     mv wp-cli.phar /usr/local/bin/wp
 
-# Create necessary directories and set permissions
-RUN mkdir -p /run/php /var/www/html/wordpress\
-    mkdir -p /etc/php${PHP_VERSION}/fpm/pool.d && \
-    touch /etc/php${PHP_VERSION}/fpm/pool.d/www.conf
+# Sets the working directory
+WORKDIR /var/www/html/wordpress
 
-# - add the "wordpress_server" group and user
-RUN addgroup --system wordpress_server && \
-    adduser --system wordpress_server
-
-COPY ./wordpress/conf/www.conf /www.conf.tmpl
-
-# - Sets the working directory where I want to download wp core
-WORKDIR /var/www/html
-
-# - downloads wp core
+# Download wp core
 RUN wp core download --locale=en_GB --allow-root    
 
 # Copy your wp-config-create.sh script to the container
@@ -61,8 +44,6 @@ COPY ./wordpress/conf/wp-config-create.sh /usr/local/bin/
 
 # Set the script as executable
 RUN chmod +x /usr/local/bin/wp-config-create.sh
-
-RUN rm -f /etc/php/8.0/fpm/pool.d/www.conf
 
 EXPOSE 9000
 

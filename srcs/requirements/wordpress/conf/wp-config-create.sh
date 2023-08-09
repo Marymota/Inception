@@ -2,10 +2,11 @@
 
 set -x
 
-#until mysql --host=mariadb --user=root --password=${DB_PASS} -e '\c'; do
-#  echo >&2 "mariadb is unavailable - sleeping"
-#  sleep 1
-#done
+if [ ! -d "/home/${USER}/data" ]; then
+        mkdir ~/data
+        mkdir ~/data/mariadb
+        mkdir ~/data/wordpress
+fi
 
 # Checks if the config file has already been created by a previous run of this script
 if [ -e /etc/php/8.0/fpm/pool.d/www.conf ]; then
@@ -33,10 +34,10 @@ else
 
     # Create the wordpress config file
    wp config create --allow-root \
-       --dbname=wordpress \
-       --dbuser=mmota \
-       --dbpass=10taCruel \
-       --dbhost=mariadb
+       --dbname=${DB_NAME} \
+       --dbuser=${DB_USER} \
+       --dbpass=${DB_PASS} \
+       --dbhost=${DB_HOST}
 
 	chmod 777 wp-config.php
 fi
@@ -48,32 +49,32 @@ else
 
     # Installs wordpress
    wp core install --allow-root \
-       --url=https://mmota.42.fr \
-       --title=Inception \
-       --admin_user=mmota \
-       --admin_email=mmota@42.fr \
-       --admin_password=10taCruel
+       --url=https://${DOMAIN_NAME} \
+       --title=${DB_TITLE} \
+       --admin_user=${DB_USER} \
+       --admin_email=${DB_MAIL} \
+       --admin_password=${DB_PASS}
 
     # create a new author user
    wp user create --allow-root \
-       mmota \
-       mmota@42.fr \
+       ${DB_USER} \
+       ${DB_MAIL} \
        --role=author \
-       --user_pass=10taCruel
+       --user_pass=${DB_PASS}
 
     # Turns off debugging which is needed when using CLI from container
     wp config set WORDPRESS_DEBUG false --allow-root
 fi
 
 # Check if author user has already been created by a previous run of this script
-if !(wp user list --field=user_login --allow-root | grep mmota); then
+if !(wp user list --field=user_login --allow-root | grep ${DB_NAME}); then
 
 	# create a new author user
     wp user create --allow-root \
-        mmota \
-        mmota@42.fr \
+        ${DB_USER} \
+        ${DB_MAIL} \
         --role=author \
-        --user_pass=10taCruel
+        --user_pass=${DB_PASS}
 
 fi
 

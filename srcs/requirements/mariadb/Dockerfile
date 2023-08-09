@@ -1,9 +1,14 @@
 FROM alpine:3.16
 
-ARG DB_NAME \
-    DB_USER \
-    DB_PASS \
-    DB_HOST
+ARG DB_NAME
+ARG DB_USER
+ARG DB_PASS
+ARG DB_ROOT
+ARG DB_HOST
+ARG DB_MAIL
+ARG DB_TITLE
+ARG DB_URL
+ARG DOMAIN_NAME 
 
 RUN apk update && apk add --no-cache mariadb mariadb-client
 
