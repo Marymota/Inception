@@ -23,6 +23,7 @@ RUN mkdir /var/run/mysqld; \
       /etc/my.cnf.d/mariadb-server.cnf
 
 RUN mysql_install_db --user=mysql --basedir=/usr --datadir=/var/lib/mysql 
+#RUN mysql_secure_installation --user=mysql --basedir=/usr --datadir=/var/lib/mysql 
 
 EXPOSE 3306
 
@@ -30,4 +31,4 @@ COPY mariadb/conf/create_db.sh .
 RUN sh create_db.sh && rm create_db.sh
 USER mysql
 
-ENTRYPOINT ["mysqld_safe"]
+ENTRYPOINT ["/usr/bin/mysqld", "--skip-log-error"]

@@ -64,6 +64,9 @@ services:
       - DB_MAIL
       - DB_TITLE
       - DB_URL
+      - WP_NAME
+      - WP_PASS
+      - WP_MAIL
       - DOMAIN_NAME
     container_name: wordpress
     depends_on:
