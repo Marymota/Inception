@@ -2,18 +2,6 @@
 
 set -x
 
-# Checks if the config file has already been created by a previous run of this script
-#if [ -e /etc/php/8.0/fpm/pool.d/www.conf ]; then
-#    echo "FastCGI Process Manager config already created"
-#else
-#    # Create the directory for www.conf if it doesn't exist
-#     mkdir -p /etc/php/8.0/fpm/pool.d
-
-    # Substitutes env variables and creates config file
-#     cat /www.conf.tmpl | /usr/bin/envsubst > /etc/php/8.0/fpm/pool.d/www.conf
-#     chmod 755 /etc/php/8.0/fpm/pool.d/www.conf
-#fi
-
 # Checks if wp-config.php file has already been created by a previous run of this script
 if [ -e wp-config.php ]; then
 	  echo "Wordpress config already created"

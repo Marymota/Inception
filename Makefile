@@ -17,10 +17,10 @@ down:
 	@printf "Stop ${name}...\n"
 	@docker-compose -f ./srcs/docker-compose.yml --env-file ./srcs/.env down
 
-re:	down
-	@printf "Rebuild ${name}...\n"
-	@bash srcs/requirements/wordpress/tools/make_dir.sh
-	@docker-compose -f ./srcs/docker-compose.yml --env-file ./srcs/.env up -d --build
+#re:	down
+#	@printf "Rebuild ${name}...\n"
+#	@bash srcs/requirements/wordpress/tools/make_dir.sh
+#	@docker-compose -f ./srcs/docker-compose.yml --env-file ./srcs/.env up -d --build
 
 # Remove unused data --all
 clean: 	down
